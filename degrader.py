@@ -1,16 +1,18 @@
 import unit as U
 import strategy as S
 
-
 class Degrader:
     __strategies = {
         "deletion": S.Deletion,
         "replacement": S.Replacement,
         "sameness": S.Sameness,
+        "random_char_replacementUnic": S.RandomCharReplacementUnic,
+        "random_word_replacementUnic": S.RandomWordReplacementUnic,
+        "word_shuffler": S.WordShuffle,
     }
     __units = {
         "chars": U.Chars(),
-        "words": U.NotChar("\s"),
+        "words": U.NotChar(r"\s"),
         "lines": U.NotChar("\n"),
     }
 
@@ -26,5 +28,6 @@ class Degrader:
 
     def degrade(self, text: str) -> str:
         presult = self.unit.parse(text)
+        #print(presult)
         output = self.strategy.execute(presult)
         return output

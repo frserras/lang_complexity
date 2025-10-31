@@ -1,6 +1,5 @@
 import unittest
-from random import random
-import unit as U
+import src.unit as U
 
 
 class TestUnit(unittest.TestCase):

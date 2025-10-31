@@ -13,11 +13,17 @@ class ParseResult(NamedTuple):
         if select is None:
             return "".join(self.sequence)
 
-        sequence = (
-            s
-            for i, s in enumerate(self.sequence)
-            if (i in select or i not in self.index)
-        )
+        sequence = []
+        isSeparator = True
+        for i, s in enumerate(self.sequence):
+            if i in select:
+                isSeparator = False
+                sequence.append(s)
+
+            if i not in self.index and isSeparator == False:
+                isSeparator = True
+                sequence.append(s)
+
         output = "".join(sequence)
         return output
 
@@ -40,7 +46,7 @@ class Chars(UnitParser):
         ]
         output = ParseResult(indexed_sequence, set(idx))
         return output
-    
+
 
 class NotChar(UnitParser):
     def __init__(self, char: str):
@@ -50,7 +56,7 @@ class NotChar(UnitParser):
         seq = []
         idx = set()
         for i, (fst, snd) in enumerate(
-            re.findall(r"([^%s]+)|(%s+)" % (self.char, self.char), text)
+                re.findall(r"([^%s]+)|(%s+)" % (self.char, self.char), text)
         ):
             if elem := fst:
                 idx.add(i)

@@ -1,8 +1,9 @@
 import gzip
 import bz2
 import zpaq
-#from sequitur import Sequitur as sqtr
 from compressors import dzip, alphazip, bsc_python
+
+#from sequitur import Sequitur as sqtr
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -16,7 +17,7 @@ class Compressor:
         #"sequitur": sqtr.compress,
         "bsc": bsc_python.compress,
         #"alphazip": alphazip.compress,
-        "dzip": dzip.compress,
+        #"dzip": dzip.compress,
         "none": lambda x: x,
     }
 
