@@ -1,5 +1,9 @@
 import gzip
 import bz2
+import zpaq
+from compressors import dzip, alphazip, bsc_python
+
+#from sequitur import Sequitur as sqtr
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -9,6 +13,11 @@ class Compressor:
     __compressors = {
         "gzip": gzip.compress,
         "bzip2": bz2.compress,
+        "zpaq": zpaq.compress, 
+        #"sequitur": sqtr.compress,
+        "bsc": bsc_python.compress,
+        #"alphazip": alphazip.compress,
+        #"dzip": dzip.compress,
         "none": lambda x: x,
     }
 
@@ -24,3 +33,4 @@ class Compressor:
 
     def compress(self, text: str) -> bytes:
         return self.function(text.encode(self.encoding), **self.extra_arguments)
+
