@@ -1,3 +1,4 @@
+import warnings
 import unit as U
 import strategy as S
 
@@ -15,6 +16,16 @@ class Degrader:
     }
 
     def __init__(self, strategy: S.Strategy, unit: U.UnitParser):
+
+        if isinstance(strategy, S.Replacement) and isinstance(unit, U.Chars):
+            warnings.warn(
+                "The combination of the 'replacement' strategy with the 'chars' "
+                "unit is not covered by tests, as it is not used in any of "
+                "the metrics implemented in the library.",
+                UserWarning,
+                stacklevel=2
+            )
+
         self.unit = unit
         self.strategy = strategy
 
