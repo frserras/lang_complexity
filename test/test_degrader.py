@@ -27,11 +27,18 @@ class testDegrader(unittest.TestCase):
                     1 for char in original_text if not cat(char).startswith("Z")
                 )
                 space_count = len(original_text) - non_space_count
+
+                non_space_count_degraded = sum(
+                    1 for char in degraded_text if not cat(char).startswith("Z")
+                )
+                space_count_degraded = len(degraded_text) - non_space_count_degraded
+            
                 
                 retention_rate = 1.0 - percent
                 expected_non_spaces = math.ceil(round(non_space_count * retention_rate, 2))
                 expected_length = expected_non_spaces + space_count
 
+                self.assertEqual(space_count, space_count_degraded)
                 self.assertEqual(len(degraded_text), expected_length)
                 self.assertTrue(set(degraded_text) <= set(original_text))
 
@@ -71,16 +78,38 @@ class testDegrader(unittest.TestCase):
 
                 self.assertEqual(retained_count, expected_retained)
 
-    def test_deletion_word(self):
-        s = " ".join("abcdefghijklmnopqrstuvwxyz")
-        p = 0.1
-        q = 1 - p
-        d = Degrader.new("deletion", "words", percent=p)
-        o = d.degrade(s)
 
-        len_degraded = len(o.split())
-        len_expected = math.ceil(len(s.split()) * q)
-        self.assertEqual(len_degraded, len_expected)
+    def test_deletion_word(self):
+        test_strings = [
+            " ".join("abcdefghijklmnopqrstuvwxyz"),
+            "Uma frase normal com varias palavras de tamanhos diferentes",
+            "Apenas-uma-palavra-inteira",
+            "Testando   multiplos  espaços e \t tabulações",
+            "123 456 789 012 345 678 901",
+        ]
+        deletion_percentages = [i / 10.0 for i in range(10)]
+
+        for original_text, percent in product(test_strings, deletion_percentages):
+            with self.subTest(original_text=original_text, percent=percent):
+                degrader = Degrader.new("deletion", "words", percent=percent)
+                degraded_text = degrader.degrade(original_text)
+
+                orig_words = original_text.split()
+                deg_words = degraded_text.split()
+
+                retention_rate = 1.0 - percent
+                expected_retained = math.ceil(round(len(orig_words) * retention_rate, 2))
+                self.assertEqual(len(deg_words), expected_retained)
+
+                orig_spaces = sum(
+                    1 for char in original_text if cat(char).startswith("Z")
+                )
+                deg_spaces = sum(
+                    1 for char in degraded_text if cat(char).startswith("Z")
+                )
+                self.assertEqual(orig_spaces, deg_spaces)
+
+                self.assertTrue(set(deg_words) <= set(orig_words))
 
     def test_replace_char(self):
         s = "abcdefghijklmnopqrstuvwxyz"
