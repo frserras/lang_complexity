@@ -1,20 +1,39 @@
 import math
 import unittest
 from degrader import Degrader
+from unicodedata import category as cat
+from itertools import product
 
 
 class testDegrader(unittest.TestCase):
+
     def test_deletion_char(self):
-        s = "abcdefghijklmnopqrstuvwxyz"
-        p = 0.1
-        q = 1 - p
-        d = Degrader.new("deletion", "chars", percent=p)
-        o = d.degrade(s)
+        test_strings = [
+            "abcdefghijklmnopqrstuvwxyz",
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            "!@#$%^&*()_+!@#$%^&*()_+",
+            "0123456789012345678901234567890123456789",
+            "Olá, tudo bem com você?",
+            "012345 6789012 3456789012 34567 890123456789",
+        ]
+        deletion_percentages = [i / 10.0 for i in range(10)]
 
-        len_degraded = len(o)
-        len_expected = math.ceil(len(s) * q)
+        for original_text, percent in product(test_strings, deletion_percentages):
+            with self.subTest(original_text=original_text, percent=percent):
+                degrader = Degrader.new("deletion", "chars", percent=percent)
+                degraded_text = degrader.degrade(original_text)
 
-        self.assertEqual(len_degraded, len_expected)
+                non_space_count = sum(
+                    1 for char in original_text if not cat(char).startswith("Z")
+                )
+                space_count = len(original_text) - non_space_count
+                
+                retention_rate = 1.0 - percent
+                expected_non_spaces = math.ceil(round(non_space_count * retention_rate, 2))
+                expected_length = expected_non_spaces + space_count
+
+                self.assertEqual(len(degraded_text), expected_length)
+                self.assertTrue(set(degraded_text) <= set(original_text))
 
     def test_deletion_lines(self):
         st = "abcdefghijklmnopqrstuvwxyz"
