@@ -35,17 +35,41 @@ class testDegrader(unittest.TestCase):
                 self.assertEqual(len(degraded_text), expected_length)
                 self.assertTrue(set(degraded_text) <= set(original_text))
 
-    def test_deletion_lines(self):
-        st = "abcdefghijklmnopqrstuvwxyz"
-        s = "\n".join(st)
-        p = 0.1
-        q = 1 - p
-        d = Degrader.new("deletion", "lines", percent=p)
-        o = d.degrade(s)
 
-        len_degraded = len(o)
-        len_expected = len(s) - int(len(st) * p)
-        self.assertEqual(len_degraded, len_expected)
+
+    def test_deletion_lines(self):
+        test_strings = [
+            "\n".join("abcdefghijklmnopqrstuvwxyz"),  # 26 linhas de 1 char
+            "Linha 1\nLinha 2\nLinha 3\nLinha 4\nLinha 5\nLinha 6\nLinha 7\nLinha 8\nLinha 9\nLinha 10", # 10 linhas
+            "Apenas uma unica linha sem quebras", # 1 linha
+            "12345\n67890\nABCDE\nFGHIJ", # 4 linhas
+            "Olá!\nTudo bem com você?\nComo estão as coisas por aí?\nEspero que tudo ótimo.", # 4 linhas variadas
+        ]
+        deletion_percentages = [i / 10.0 for i in range(10)]
+
+        for original_text, percent in product(test_strings, deletion_percentages):
+            with self.subTest(original_text=original_text, percent=percent):
+                degrader = Degrader.new("deletion", "lines", percent=percent)
+                degraded_text = degrader.degrade(original_text)
+
+
+                orig_lines = original_text.split("\n")
+                deg_lines = degraded_text.split("\n")
+
+
+                self.assertEqual(len(deg_lines), len(orig_lines))
+
+                retained_count = 0
+                for orig, deg in zip(orig_lines, deg_lines):
+                    if orig == deg:
+                        retained_count += 1
+                    else:
+                        self.assertTrue(deg == "")
+
+                retention_rate = 1.0 - percent
+                expected_retained = math.ceil(round(len(orig_lines) * retention_rate, 2))
+
+                self.assertEqual(retained_count, expected_retained)
 
     def test_deletion_word(self):
         s = " ".join("abcdefghijklmnopqrstuvwxyz")
