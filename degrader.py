@@ -17,10 +17,16 @@ class Degrader:
 
     def __init__(self, strategy: S.Strategy, unit: U.UnitParser):
 
-        if isinstance(strategy, S.Replacement) and isinstance(unit, U.Chars):
-            warnings.warn(
-                "The combination of the 'replacement' strategy with the 'chars' "
-                "unit is not covered by tests, as it is not used in any of "
+        if (
+            isinstance(strategy, S.Replacement)
+            and (
+                isinstance(unit, U.Chars)
+                or (isinstance(unit, U.NotChar) and unit.char == "\n")
+            )
+        ):
+                warnings.warn(
+                "This combination of strategy and unit is not covered"
+                "by tests, as it is not used in any of "
                 "the metrics implemented in the library.",
                 UserWarning,
                 stacklevel=2
