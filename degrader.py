@@ -25,7 +25,7 @@ class Degrader:
             )
         ):
                 warnings.warn(
-                "This combination of strategy and unit is not covered"
+                "This combination of strategy and unit is not covered "
                 "by tests, as it is not used in any of "
                 "the metrics implemented in the library.",
                 UserWarning,

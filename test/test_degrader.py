@@ -175,18 +175,28 @@ class testDegrader(unittest.TestCase):
     #     len_expected = len(s.split("\n"))
         # self.assertEqual(len_degraded, len_expected)
 
+
     def test_sameness(self):
-        s = "".join("abcdefghijklmnopqrstuvwxyz")
-        d1 = Degrader.new("sameness", "chars")
-        self.assertEqual(s, d1.degrade(s))
+        test_strings = [
+            "abcdefghijklmnopqrstuvwxyz",
+            "Uma frase normal com espaços.",
+            "12345 67890 09876",
+            "!@#$% ^&*() _+-=[]{}|;':,./<>?",
+            "Texto\tcom\ttabs\ne\nquebras\r\nde\nlinha",
+            "   Espaços no começo e no final   ",
+            "Olá, mundo! 👋🌍🚀",
+            "",
+        ]
+        
+        units = ["chars", "words", "lines"]
 
-        s = " ".join("abcdefghijklmnopqrstuvwxyz")
-        d2 = Degrader.new("sameness", "words")
-        self.assertEqual(s, d2.degrade(s))
+        for original_text, unit in product(test_strings, units):
+            with self.subTest(original_text=original_text, unit=unit):
 
-        s = "\n".join("abcdefghijklmnopqrstuvwxyz")
-        d3 = Degrader.new("sameness", "lines")
-        self.assertEqual(s, d3.degrade(s))
+                degrader = Degrader.new("sameness", unit)
+                degraded_text = degrader.degrade(original_text)
+
+                self.assertEqual(original_text, degraded_text)
 
 
 if __name__ == "__main__":
