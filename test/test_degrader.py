@@ -79,7 +79,7 @@ class testDegrader(unittest.TestCase):
                 self.assertEqual(retained_count, expected_retained)
 
 
-    def test_deletion_word(self):
+    def test_deletion_words(self):
         test_strings = [
             " ".join("abcdefghijklmnopqrstuvwxyz"),
             "Uma frase normal com varias palavras de tamanhos diferentes",
@@ -124,14 +124,42 @@ class testDegrader(unittest.TestCase):
     #     len_expected = 10 * len(s)
     #     self.assertEqual(len_degraded, len_expected)
 
-    def test_replace_word(self):
-        s = " ".join("abcdefghijklmnopqrstuvwxyz")
-        d = Degrader.new("replacement", "words")
-        o = d.degrade(s)
 
-        len_degraded = len(o.split())
-        len_expected = len(s.split())
-        self.assertEqual(len_degraded, len_expected)
+    def test_replacement_words(self):
+        test_strings = [
+            "gato cachorro rato gato", #
+            "a a a a a", 
+            "Uma frase normal sem repeticoes", 
+            "Testando \t espaços   e \n quebras com Testando e espaços", 
+            "123 abc 123 def abc",
+        ]
+
+        for original_text in test_strings:
+            with self.subTest(original_text=original_text):
+                degrader = Degrader.new("replacement", "words")
+                degraded_text = degrader.degrade(original_text)
+
+                orig_words = original_text.split()
+                deg_words = degraded_text.split()
+
+
+                self.assertEqual(len(orig_words), len(deg_words))
+
+                self.assertEqual(len(set(orig_words)), len(set(deg_words)))
+
+                mapping = set(zip(orig_words, deg_words))
+                self.assertEqual(len(mapping), len(set(orig_words)))
+
+                for word in deg_words:
+                    self.assertTrue(word.isdigit(), f"Textblock '{word}' is not an index.")
+
+                orig_spaces = sum(
+                    1 for char in original_text if cat(char).startswith("Z")
+                )
+                deg_spaces = sum(
+                    1 for char in degraded_text if cat(char).startswith("Z")
+                )
+                self.assertEqual(orig_spaces, deg_spaces)
 
     def test_replace_lines(self):
         s = "\n".join("abcdefghijklmnopqrstuvwxyz")
