@@ -29,6 +29,7 @@ class Replacement(Strategy):
     def execute(self, presult: ParseResult) -> str:
         pseq = list(presult.iter())
         unique = list(set(pseq))
+        unique.sort()
         random.shuffle(unique)
         encode = {w: i for i, w in enumerate(unique)}
         output = "".join(
