@@ -41,3 +41,25 @@ class Replacement(Strategy):
             )
         )
         return output
+    
+class CharMasking(Strategy):
+    def __init__(self, percent: float, seed=None, mask='α'):
+        super().__init__()
+        self.percent = percent
+        self.rng = random.Random(seed)
+        self.mask = mask
+    
+    def _mask_and_reconstruct(self, chars, indices_to_mask):
+        for idx in indices_to_mask:
+            chars[idx] = self.mask
+        chars_masked = ''.join(chars)
+        return chars_masked
+
+    def execute(self, presult: ParseResult) -> str:
+        values, chars = list(presult.index), list(presult.sequence)
+        num_to_replace = int(len(values) * self.percent)
+        indices_to_mask = self.rng.sample(values, num_to_replace)
+        output = self._mask_and_reconstruct(chars, indices_to_mask)
+        return output
+
+
