@@ -1,8 +1,7 @@
 import random
 from unit import ParseResult
 from abc import ABC, abstractmethod
-import re
-import os
+from typing import Optional, Set, List
 
 
 class Strategy(ABC):
@@ -50,9 +49,9 @@ class Masking(Strategy):
         self.percent = percent
         self.rng = random.Random(seed)
         self.mask = mask
-    
-    def _mask_and_reconstruct(self, units, indices_to_mask):
-        for idx in indices_to_mask:
+
+    def _reconstruct(self, units: List[str], indices: Set[int]) -> str:
+        for idx in indices:
             units[idx] = len(units[idx]) * self.mask
         seq_masked = ''.join(units)
         return seq_masked
@@ -61,7 +60,7 @@ class Masking(Strategy):
         indices, units = list(presult.index), list(presult.sequence)
         num_to_replace = int(len(indices) * self.percent)
         indices_to_mask = self.rng.sample(indices, num_to_replace)
-        output = self._mask_and_reconstruct(units, indices_to_mask)
+        output = self._reconstruct(units, indices_to_mask)
         return output
     
 class Shuffle(Strategy):
@@ -69,8 +68,8 @@ class Shuffle(Strategy):
         super().__init__()
         self.percent = percent
         self.rng = random.Random(seed)
-    
-    def _shuffle_and_reconstruct(self, units, indices):
+
+    def _reconstruct(self, units: List[str], indices: Set[int]) -> str:
         result = units.copy()
         elements_to_shuffle = [result[i] for i in indices]
         self.rng.shuffle(elements_to_shuffle)
@@ -83,7 +82,7 @@ class Shuffle(Strategy):
         indices, units = list(presult.index), list(presult.sequence)
         num_to_shuffle = int(len(indices) * self.percent)
         indices_to_shuffle = self.rng.sample(indices, num_to_shuffle)
-        output = self._shuffle_and_reconstruct(units, indices_to_shuffle)
+        output = self._reconstruct(units, indices_to_shuffle)
         return output
     
 
