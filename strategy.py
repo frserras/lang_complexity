@@ -1,7 +1,10 @@
 import random
 from unit import ParseResult
 from abc import ABC, abstractmethod
-from typing import Optional, Set, List
+from typing import Optional, Set, List, Any, Literal
+from utils import CharDistribution
+
+
 
 
 class Strategy(ABC):
@@ -43,18 +46,29 @@ class Replacement(Strategy):
         )
         return output
     
+MaskType = Literal["MIRROR"] | str | dict[str, Any]
+    
 class Masking(Strategy):
-    def __init__(self, percent: float, seed=None, mask='α'):
+    def __init__(self, percent: float, seed: int =None, mask: MaskType ='α'):
         super().__init__()
         self.percent = percent
         self.rng = random.Random(seed)
         self.mask = mask
 
     def _reconstruct(self, units: List[str], indices: Set[int]) -> str:
-        for idx in indices:
-            units[idx] = len(units[idx]) * self.mask
-        seq_masked = ''.join(units)
-        return seq_masked
+            match self.mask:
+                case "MIRROR":
+                    char_distr = CharDistribution.from_string("".join(units))
+                case str():
+                     char_distr = CharDistribution.from_string(self.mask)
+                case dict():
+                    char_distr = CharDistribution(self.mask) 
+                case _:
+                    raise TypeError(f"Mask type not supported: {type(self.mask)}")
+            for idx in indices:
+                units[idx] = units[idx] * char_distr
+            seq_masked = ''.join(units)
+            return seq_masked
 
     def execute(self, presult: ParseResult) -> str:
         indices, units = list(presult.index), list(presult.sequence)
