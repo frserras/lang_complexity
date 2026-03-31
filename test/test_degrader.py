@@ -338,5 +338,64 @@ class testDegrader(unittest.TestCase):
                     "Whitespace characters should not be affected by character masking."
                 )
 
+    def test_masking_lines(self):
+        test_strings = [
+            "\n".join("abcdefghijklmnopqrstuvwxyz"),  # 26 lines of 1 char
+            "Linha 1\nLinha 2\nLinha 3\nLinha 4\nLinha 5\nLinha 6\nLinha 7\nLinha 8\nLinha 9\nLinha 10", # 10 lines
+            "Apenas uma unica linha sem quebras", # 1 line
+            "12345\n67890\nABCDE\nFGHIJ", # 4 lines
+            "Olá!\nTudo bem com você?\nComo estão as coisas por aí?\nEspero que tudo ótimo.", # 4 varied lines
+        ]
+        masking_percentages = [i / 10.0 for i in range(10)]
+        mask_char = 'α'
+
+        for original_text, percent in product(test_strings, masking_percentages):
+            with self.subTest(original_text=original_text, percent=percent):
+                degrader = Degrader.new("masking", "lines", percent=percent, mask=mask_char)
+                degraded_text = degrader.degrade(original_text)
+
+                # 3. Does the total number of characters remain the same?
+                self.assertEqual(
+                    len(original_text), 
+                    len(degraded_text),
+                    "The overall string length must remain identical after masking."
+                )
+
+                orig_lines = original_text.split("\n")
+                deg_lines = degraded_text.split("\n")
+
+                # The number of lines should remain identical (newlines are preserved)
+                self.assertEqual(
+                    len(orig_lines), 
+                    len(deg_lines),
+                    "The total number of lines must remain unchanged."
+                )
+
+                masked_count = 0
+
+                for orig, deg in zip(orig_lines, deg_lines):
+                    if orig != deg:
+                        masked_count += 1
+                        # 1. Were the elements actually masked?
+                        # The entire line should be replaced by the mask character
+                        expected_masked_line = mask_char * len(orig)
+                        self.assertEqual(
+                            deg, 
+                            expected_masked_line,
+                            f"Expected masked line '{expected_masked_line}', but got '{deg}'"
+                        )
+                    else:
+                        # 4. Was everything NOT in the masked index kept unaltered?
+                        self.assertEqual(orig, deg)
+
+                # 2. Was the correct amount of elements (lines) masked?
+                # Using the int() cast as defined in Masking.execute
+                expected_masked_total = int(len(orig_lines) * percent)
+                self.assertEqual(
+                    masked_count, 
+                    expected_masked_total,
+                    f"Expected {expected_masked_total} masked lines, but found {masked_count}"
+                )
+
 if __name__ == "__main__":
     unittest.main()
