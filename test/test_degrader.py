@@ -529,5 +529,64 @@ class testDegrader(unittest.TestCase):
                 )
 
 
+    def test_shuffle_lines(self):
+        test_strings = [
+            "\n".join("abcdefghijklmnopqrstuvwxyz"),  # 26 lines of 1 char
+            "Linha 1\nLinha 2\nLinha 3\nLinha 4\nLinha 5\nLinha 6\nLinha 7\nLinha 8\nLinha 9\nLinha 10", # 10 lines
+            "Apenas uma unica linha sem quebras", # 1 line
+            "12345\n67890\nABCDE\nFGHIJ", # 4 lines
+            "Olá!\nTudo bem com você?\nComo estão as coisas por aí?\nEspero que tudo ótimo.", # 4 varied lines
+            "Texto com\n\nlinhas vazias\n\nno meio para\ntestar\n\n\nedge cases", # Edge case: lines with length 0
+        ]
+        shuffle_percentages = [i / 10.0 for i in range(10)]
+
+        for original_text, percent in product(test_strings, shuffle_percentages):
+            with self.subTest(original_text=original_text, percent=percent):
+                degrader = Degrader.new("shuffle", "lines", percent=percent)
+                degraded_text = degrader.degrade(original_text)
+
+                orig_lines = original_text.split("\n")
+                deg_lines = degraded_text.split("\n")
+
+                # 3. Were elements modified or introduced? Does total char count remain the same?
+                self.assertEqual(
+                    len(original_text), 
+                    len(degraded_text),
+                    "The overall string length must remain strictly identical."
+                )
+                
+                self.assertEqual(
+                    len(orig_lines), 
+                    len(deg_lines),
+                    "The total number of lines (and therefore newlines) must remain unchanged."
+                )
+
+                # Counter guarantees the exact same lines exist in both texts.
+                # It perfectly handles empty lines ("") as well, ensuring none were added or lost.
+                self.assertEqual(
+                    Counter(orig_lines), 
+                    Counter(deg_lines),
+                    "The exact lines and their frequencies must be preserved. No lines added, modified, or lost."
+                )
+
+                changed_positions = 0
+
+                # 1. Were the elements actually shuffled?
+                for orig, deg in zip(orig_lines, deg_lines):
+                    if orig != deg:
+                        changed_positions += 1
+
+                # 2. Was the correct amount of elements (lines) shuffled?
+                # Using the int() cast as defined in Shuffle.execute
+                expected_selected_total = int(len(orig_lines) * percent)
+                
+                # Because a shuffle might randomly drop a line back into its original index,
+                # the visibly changed positions will be at most the total selected lines.
+                self.assertTrue(
+                    changed_positions <= expected_selected_total,
+                    f"Expected at most {expected_selected_total} changed line positions, but found {changed_positions}"
+                )
+
+
 if __name__ == "__main__":
     unittest.main()
