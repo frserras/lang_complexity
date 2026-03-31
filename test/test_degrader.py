@@ -198,6 +198,145 @@ class testDegrader(unittest.TestCase):
 
                 self.assertEqual(original_text, degraded_text)
 
+    def test_masking_words(self):
+            test_strings = [
+                " ".join("abcdefghijklmnopqrstuvwxyz"),
+                "Uma frase normal com varias palavras de tamanhos diferentes",
+                "Apenas-uma-palavra-inteira",
+                "Testando   multiplos  espaços e \t tabulações",
+                "123 456 789 012 345 678 901",
+            ]
+            masking_percentages = [i / 10.0 for i in range(10)]
+            mask_char = 'α'
+
+            for original_text, percent in product(test_strings, masking_percentages):
+                with self.subTest(original_text=original_text, percent=percent):
+                    # Initialize degrader with the masking strategy
+                    degrader = Degrader.new("masking", "words", percent=percent, mask=mask_char)
+                    degraded_text = degrader.degrade(original_text)
+
+                    # 3. Does the total number of characters remain the same?
+                    self.assertEqual(
+                        len(original_text), 
+                        len(degraded_text), 
+                        "The total character count must remain identical."
+                    )
+
+                    orig_words = original_text.split()
+                    deg_words = degraded_text.split()
+
+                    # The total number of units (words) should remain exactly the same
+                    self.assertEqual(len(orig_words), len(deg_words))
+
+                    masked_count = 0
+
+                    for orig, deg in zip(orig_words, deg_words):
+                        if orig != deg:
+                            masked_count += 1
+                            # 1. Were the elements actually masked?
+                            # It should be replaced by the mask character while keeping its original length
+                            expected_masked_word = mask_char * len(orig)
+                            self.assertEqual(
+                                deg, 
+                                expected_masked_word,
+                                f"Element was not properly masked. Expected '{expected_masked_word}', got '{deg}'"
+                            )
+                        else:
+                            # 4. Was everything NOT in the masked index kept unaltered?
+                            # If the word didn't change, it must be strictly identical to the original
+                            self.assertEqual(orig, deg)
+
+                    # 2. Was the correct amount of elements masked?
+                    # Masking.execute uses: int(len(indices) * self.percent)
+                    expected_masked_total = int(len(orig_words) * percent)
+                    self.assertEqual(
+                        masked_count, 
+                        expected_masked_total,
+                        f"Expected {expected_masked_total} masked elements, but found {masked_count}"
+                    )
+
+                    # Extra check: Ensure non-word characters (like spaces/tabs) were kept unaltered
+                    # Assuming 'cat' is an alias for unicodedata.category
+                    orig_spaces = sum(
+                        1 for char in original_text if cat(char).startswith("Z")
+                    )
+                    deg_spaces = sum(
+                        1 for char in degraded_text if cat(char).startswith("Z")
+                    )
+                    self.assertEqual(
+                        orig_spaces, 
+                        deg_spaces, 
+                        "The number of whitespace characters must remain unchanged."
+                    )
+
+
+    def test_masking_char(self):
+        test_strings = [
+            "abcdefghijklmnopqrstuvwxyz",
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            "!@#$%^&*()_+!@#$%^&*()_+",
+            "0123456789012345678901234567890123456789",
+            "Olá, tudo bem com você?",
+            "012345 6789012 3456789012 34567 890123456789",
+        ]
+        masking_percentages = [i / 10.0 for i in range(10)]
+        mask_char = 'α'
+
+        for original_text, percent in product(test_strings, masking_percentages):
+            with self.subTest(original_text=original_text, percent=percent):
+                degrader = Degrader.new("masking", "chars", percent=percent, mask=mask_char)
+                degraded_text = degrader.degrade(original_text)
+
+                # 3. Does the total number of characters remain the same?
+                self.assertEqual(
+                    len(original_text), 
+                    len(degraded_text),
+                    "The length of the string must remain identical during masking."
+                )
+
+                # Calculate how many valid indexable characters exist (non-spaces)
+                non_space_count = sum(
+                    1 for char in original_text if not cat(char).startswith("Z")
+                )
+
+                masked_count = 0
+
+                # Iterate character by character
+                for orig_char, deg_char in zip(original_text, degraded_text):
+                    if orig_char != deg_char:
+                        masked_count += 1
+                        # 1. Was the character actually masked?
+                        self.assertEqual(
+                            deg_char, 
+                            mask_char,
+                            f"Expected mask character '{mask_char}', but got '{deg_char}'"
+                        )
+                    else:
+                        # 4. Was everything else kept unaltered?
+                        # If it didn't change, it must be the exact same character
+                        self.assertEqual(orig_char, deg_char)
+
+                # 2. Was the correct amount of characters masked?
+                # Using the exact math from Masking.execute: int(len(indices) * self.percent)
+                expected_masked_total = int(non_space_count * percent)
+                self.assertEqual(
+                    masked_count, 
+                    expected_masked_total,
+                    f"Expected {expected_masked_total} masked characters, but found {masked_count}"
+                )
+
+                # Extra check: Ensure non-indexable characters (like spaces) were kept unaltered
+                orig_spaces = sum(
+                    1 for char in original_text if cat(char).startswith("Z")
+                )
+                deg_spaces = sum(
+                    1 for char in degraded_text if cat(char).startswith("Z")
+                )
+                self.assertEqual(
+                    orig_spaces, 
+                    deg_spaces,
+                    "Whitespace characters should not be affected by character masking."
+                )
 
 if __name__ == "__main__":
     unittest.main()
