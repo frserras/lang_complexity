@@ -8,6 +8,8 @@ class Degrader:
         "deletion": S.Deletion,
         "replacement": S.Replacement,
         "sameness": S.Sameness,
+        "masking": S.Masking,
+        "shuffle": S.Shuffle
     }
     __units = {
         "chars": U.Chars(),
