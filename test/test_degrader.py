@@ -468,6 +468,66 @@ class testDegrader(unittest.TestCase):
                 )
 
 
+    def test_shuffle_chars(self):
+        test_strings = [
+            "abcdefghijklmnopqrstuvwxyz",
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            "!@#$%^&*()_+!@#$%^&*()_+",
+            "0123456789012345678901234567890123456789",
+            "Olá, tudo bem com você?",
+            "012345 6789012 3456789012 34567 890123456789",
+            "aaaaa bbbbb ccccc ddddd", # Edge case for Counter and positional changes
+        ]
+        shuffle_percentages = [i / 10.0 for i in range(10)]
+
+        for original_text, percent in product(test_strings, shuffle_percentages):
+            with self.subTest(original_text=original_text, percent=percent):
+                degrader = Degrader.new("shuffle", "chars", percent=percent)
+                degraded_text = degrader.degrade(original_text)
+
+                # 3. Were elements modified or introduced? Does total char count remain the same?
+                self.assertEqual(
+                    len(original_text), 
+                    len(degraded_text),
+                    "The string length must remain perfectly identical."
+                )
+                
+                # Counter guarantees the exact same pool of characters exists in both strings.
+                self.assertEqual(
+                    Counter(original_text), 
+                    Counter(degraded_text),
+                    "The exact character frequencies must be preserved. No chars added or lost."
+                )
+
+                # Calculate the valid indexable characters (non-spaces)
+                non_space_count = sum(
+                    1 for char in original_text if not cat(char).startswith("Z")
+                )
+
+                changed_positions = 0
+
+                # 1 & 4. Check for shuffled elements and strictly unaltered spaces
+                for orig_char, deg_char in zip(original_text, degraded_text):
+                    # Check if it's a whitespace character
+                    if cat(orig_char).startswith("Z"):
+                        self.assertEqual(
+                            orig_char, 
+                            deg_char,
+                            "Whitespace characters must never be moved or altered."
+                        )
+                    elif orig_char != deg_char:
+                        changed_positions += 1
+
+                # 2. Was the correct amount of elements shuffled?
+                # Using the int() cast as defined in Shuffle.execute based on index length
+                expected_selected_total = int(non_space_count * percent)
+                
+                # The visibly changed positions will be at most the total selected chars.
+                self.assertTrue(
+                    changed_positions <= expected_selected_total,
+                    f"Expected at most {expected_selected_total} changed positions, but found {changed_positions}"
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
