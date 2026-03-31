@@ -3,6 +3,7 @@ import unittest
 from degrader import Degrader
 from unicodedata import category as cat
 from itertools import product
+from collections import Counter
 
 
 class testDegrader(unittest.TestCase):
@@ -396,6 +397,77 @@ class testDegrader(unittest.TestCase):
                     expected_masked_total,
                     f"Expected {expected_masked_total} masked lines, but found {masked_count}"
                 )
+
+    def test_shuffle_words(self):
+        test_strings = [
+            " ".join("abcdefghijklmnopqrstuvwxyz"),
+            "Uma frase normal com varias palavras de tamanhos diferentes",
+            "Apenas-uma-palavra-inteira",
+            "Testando   multiplos  espaços e \t tabulações",
+            "123 456 789 012 345 678 901",
+            "Palavras repetidas repetidas repetidas repetidas", # Edge case for Counter
+        ]
+        shuffle_percentages = [i / 10.0 for i in range(10)]
+
+        for original_text, percent in product(test_strings, shuffle_percentages):
+            with self.subTest(original_text=original_text, percent=percent):
+                # Initialize degrader with the shuffle strategy
+                degrader = Degrader.new("shuffle", "words", percent=percent)
+                degraded_text = degrader.degrade(original_text)
+
+                orig_words = original_text.split()
+                deg_words = degraded_text.split()
+
+                # 3. Were elements modified or introduced? Does total char count remain the same?
+                self.assertEqual(
+                    len(original_text), 
+                    len(degraded_text),
+                    "The overall string length must remain identical after shuffling."
+                )
+                self.assertEqual(
+                    len(orig_words), 
+                    len(deg_words),
+                    "The total amount of words must remain unchanged."
+                )
+                
+                # Using Counter proves that the exact same words exist in the exact same frequencies.
+                # It guarantees no elements were fundamentally modified, added, or lost.
+                self.assertEqual(
+                    Counter(orig_words), 
+                    Counter(deg_words),
+                    "The vocabulary and frequencies must remain identical."
+                )
+
+                # 1 & 2. Were elements shuffled? Was the correct amount shuffled?
+                # Calculate the exact number of elements selected by Shuffle.execute
+                expected_selected_total = int(len(orig_words) * percent)
+                
+                # Count how many words are in a visibly different position
+                changed_positions = sum(1 for orig, deg in zip(orig_words, deg_words) if orig != deg)
+                
+                # Because a shuffle might randomly drop an element back into its original index,
+                # the visibly changed positions will be at most the total selected elements.
+                # (And it's impossible to have more changed positions than selected elements)
+                self.assertTrue(
+                    changed_positions <= expected_selected_total,
+                    f"Expected at most {expected_selected_total} changed positions, but found {changed_positions}"
+                )
+
+                # 4. Was everything outside the index kept unaltered?
+                # Verify whitespace counts
+                orig_spaces = sum(
+                    1 for char in original_text if cat(char).startswith("Z")
+                )
+                deg_spaces = sum(
+                    1 for char in degraded_text if cat(char).startswith("Z")
+                )
+                self.assertEqual(
+                    orig_spaces, 
+                    deg_spaces, 
+                    "The total number of whitespace characters must remain strictly unchanged."
+                )
+
+
 
 if __name__ == "__main__":
     unittest.main()
