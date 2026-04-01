@@ -33,12 +33,15 @@ class UnitParser(ABC):
 
 
 class Chars(UnitParser):
+    def __init__(self, ignore_punctuation: bool = False):
+        self.ignore_punctuation = ignore_punctuation
+
     def parse(self, text: str, ignore_punctuation: bool = False) -> ParseResult:
         indexed_sequence = [c for c in text]
         idx = [
             i for (i, c) in enumerate(indexed_sequence) 
             if not (cat(c).startswith("Z") or 
-                    (ignore_punctuation and cat(c).startswith("P")))
+                    (self.ignore_punctuation and cat(c).startswith("P")))
         ]
         output = ParseResult(indexed_sequence, set(idx))
         return output

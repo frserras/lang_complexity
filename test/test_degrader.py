@@ -20,8 +20,8 @@ class testDegrader(unittest.TestCase):
         deletion_percentages = [i / 10.0 for i in range(10)]
 
         for original_text, percent in product(test_strings, deletion_percentages):
-            with self.subTest(original_text=original_text, percent=percent):
-                degrader = Degrader.new("deletion", "chars", percent=percent)
+            with self.subTest(original_text=original_text, strategy_arguments={'percent':percent}):
+                degrader = Degrader.new("deletion", "chars", strategy_arguments={'percent':percent})
                 degraded_text = degrader.degrade(original_text)
 
                 non_space_count = sum(
@@ -56,8 +56,8 @@ class testDegrader(unittest.TestCase):
         deletion_percentages = [i / 10.0 for i in range(10)]
 
         for original_text, percent in product(test_strings, deletion_percentages):
-            with self.subTest(original_text=original_text, percent=percent):
-                degrader = Degrader.new("deletion", "lines", percent=percent)
+            with self.subTest(original_text=original_text, strategy_arguments={'percent':percent}):
+                degrader = Degrader.new("deletion", "lines", strategy_arguments={'percent':percent})
                 degraded_text = degrader.degrade(original_text)
 
 
@@ -91,8 +91,8 @@ class testDegrader(unittest.TestCase):
         deletion_percentages = [i / 10.0 for i in range(10)]
 
         for original_text, percent in product(test_strings, deletion_percentages):
-            with self.subTest(original_text=original_text, percent=percent):
-                degrader = Degrader.new("deletion", "words", percent=percent)
+            with self.subTest(original_text=original_text, strategy_arguments={'percent':percent}):
+                degrader = Degrader.new("deletion", "words", strategy_arguments={'percent':percent})
                 degraded_text = degrader.degrade(original_text)
 
                 orig_words = original_text.split()
@@ -211,9 +211,9 @@ class testDegrader(unittest.TestCase):
             mask_char = 'α'
 
             for original_text, percent in product(test_strings, masking_percentages):
-                with self.subTest(original_text=original_text, percent=percent):
+                with self.subTest(original_text=original_text, strategy_arguments={'percent':percent}):
                     # Initialize degrader with the masking strategy
-                    degrader = Degrader.new("masking", "words", percent=percent, mask=mask_char)
+                    degrader = Degrader.new("masking", "words", strategy_arguments={'percent':percent, 'mask':mask_char})
                     degraded_text = degrader.degrade(original_text)
 
                     # 3. Does the total number of characters remain the same?
@@ -284,8 +284,8 @@ class testDegrader(unittest.TestCase):
         mask_char = 'α'
 
         for original_text, percent in product(test_strings, masking_percentages):
-            with self.subTest(original_text=original_text, percent=percent):
-                degrader = Degrader.new("masking", "chars", percent=percent, mask=mask_char)
+            with self.subTest(original_text=original_text, strategy_arguments={'percent':percent}):
+                degrader = Degrader.new("masking", "chars", strategy_arguments={'percent':percent, 'mask':mask_char})
                 degraded_text = degrader.degrade(original_text)
 
                 # 3. Does the total number of characters remain the same?
@@ -351,8 +351,8 @@ class testDegrader(unittest.TestCase):
         mask_char = 'α'
 
         for original_text, percent in product(test_strings, masking_percentages):
-            with self.subTest(original_text=original_text, percent=percent):
-                degrader = Degrader.new("masking", "lines", percent=percent, mask=mask_char)
+            with self.subTest(original_text=original_text, strategy_arguments={'percent':percent}):
+                degrader = Degrader.new("masking", "lines", strategy_arguments={'percent':percent, 'mask':mask_char})
                 degraded_text = degrader.degrade(original_text)
 
                 # 3. Does the total number of characters remain the same?
@@ -410,9 +410,9 @@ class testDegrader(unittest.TestCase):
         shuffle_percentages = [i / 10.0 for i in range(10)]
 
         for original_text, percent in product(test_strings, shuffle_percentages):
-            with self.subTest(original_text=original_text, percent=percent):
+            with self.subTest(original_text=original_text, strategy_arguments={'percent':percent}):
                 # Initialize degrader with the shuffle strategy
-                degrader = Degrader.new("shuffle", "words", percent=percent)
+                degrader = Degrader.new("shuffle", "words", strategy_arguments={'percent':percent})
                 degraded_text = degrader.degrade(original_text)
 
                 orig_words = original_text.split()
@@ -481,8 +481,8 @@ class testDegrader(unittest.TestCase):
         shuffle_percentages = [i / 10.0 for i in range(10)]
 
         for original_text, percent in product(test_strings, shuffle_percentages):
-            with self.subTest(original_text=original_text, percent=percent):
-                degrader = Degrader.new("shuffle", "chars", percent=percent)
+            with self.subTest(original_text=original_text, strategy_arguments={'percent':percent}):
+                degrader = Degrader.new("shuffle", "chars", strategy_arguments={'percent':percent})
                 degraded_text = degrader.degrade(original_text)
 
                 # 3. Were elements modified or introduced? Does total char count remain the same?
@@ -541,8 +541,8 @@ class testDegrader(unittest.TestCase):
         shuffle_percentages = [i / 10.0 for i in range(10)]
 
         for original_text, percent in product(test_strings, shuffle_percentages):
-            with self.subTest(original_text=original_text, percent=percent):
-                degrader = Degrader.new("shuffle", "lines", percent=percent)
+            with self.subTest(original_text=original_text, strategy_arguments={'percent':percent}):
+                degrader = Degrader.new("shuffle", "lines", strategy_arguments={'percent':percent})
                 degraded_text = degrader.degrade(original_text)
 
                 orig_lines = original_text.split("\n")

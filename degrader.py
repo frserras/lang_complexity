@@ -12,9 +12,9 @@ class Degrader:
         "shuffle": S.Shuffle
     }
     __units = {
-        "chars": U.Chars(),
-        "words": U.NotChar("\s"),
-        "lines": U.NotChar("\n"),
+        "chars": (U.Chars,{}),
+        "words": (U.NotChar,{'char':"\s"}),
+        "lines": (U.NotChar,{'char':"\n"})
     }
 
     def __init__(self, strategy: S.Strategy, unit: U.UnitParser):
@@ -38,9 +38,10 @@ class Degrader:
         self.strategy = strategy
 
     @classmethod
-    def new(cls, strategy: str, unit: str, **strategy_arguments):
-        unit = cls.__units[unit]
-        strategy = cls.__strategies[strategy](**strategy_arguments)
+    def new(cls, strategy: str, unit: str,
+            strategy_arguments: dict = None, unit_arguments: dict = None):
+        unit = cls.__units[unit][0](**(cls.__units[unit][1] | (unit_arguments or {})))
+        strategy = cls.__strategies[strategy](**(strategy_arguments or {}))
         return cls(strategy, unit)
 
     def degrade(self, text: str) -> str:
