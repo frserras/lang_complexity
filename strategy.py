@@ -13,6 +13,9 @@ class Strategy(ABC):
 
 
 class Sameness(Strategy):
+    def __init__(self, **kwargs): 
+        pass
+
     def execute(self, presult: ParseResult) -> str:
         return presult.reconstruct()
 
@@ -30,6 +33,9 @@ class Deletion(Strategy):
 
 
 class Replacement(Strategy):
+    def __init__(self, **kwargs): 
+        pass
+    
     def execute(self, presult: ParseResult) -> str:
         pseq = list(presult.iter())
         unique = list(set(pseq))

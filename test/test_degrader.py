@@ -587,6 +587,53 @@ class testDegrader(unittest.TestCase):
                     f"Expected at most {expected_selected_total} changed line positions, but found {changed_positions}"
                 )
 
+    def test_ignore_punctuation_chars(self):
+        # Test strings containing various punctuation marks and whitespace characters
+        test_strings = [
+            "Hello, world! How are you doing?", 
+            "123,456.78 - Math test (algebra) and [lists]:", 
+            "Multiple    spaces\nand\ttabs\r\nwith line breaks.", 
+            "!!!???...,,,;;;:::", 
+            "   \n \t \r  ", 
+            "Quotes with \"double\", 'single' and _underscores_.", 
+        ]
+        
+        # Percentages covering minor, medium, and complete degradation
+        percentages = [i / 10.0 for i in range(10)]
+        strategies = Degrader._Degrader__strategies.keys() - {'replacement'}
+
+
+        for strategy in strategies:
+            for original_text, percent in product(test_strings, percentages):
+                with self.subTest(strategy=strategy, text=original_text, percent=percent):
+                    
+                    # 1. Initialize the Degrader
+                    degrader = Degrader.new(
+                        strategy, 
+                        "chars", 
+                        strategy_arguments={'percent': percent}, 
+                        unit_arguments={'ignore_punctuation': True}
+                    )
+                    
+                    # 2. Degrade the text
+                    degraded_text = degrader.degrade(original_text)
+                    
+                    # 3. Extract only the protected characters in their sequence of appearance
+                    # This handles shrinking strings (deletions) by ignoring absolute indices.
+                    orig_protected = [char for char in original_text if 
+                                      cat(char).startswith("Z") or cat(char).startswith("P")]
+                    deg_protected  = [char for char in degraded_text if 
+                                      cat(char).startswith("Z") or cat(char).startswith("P")]                    
+                    # 4. Validate that the exact sequence, amount, and identity of protected characters remain intact
+                    self.assertEqual(
+                        orig_protected,
+                        deg_protected,
+                        f"Protected characters mismatch in strategy '{strategy}' (percent={percent}).\n"
+                        f"The strategy may have deleted, altered, or introduced protected characters.\n"
+                        f"Expected sequence length: {len(orig_protected)}\n"
+                        f"Got sequence length: {len(deg_protected)}"
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()
